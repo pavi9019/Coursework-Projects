@@ -27,3 +27,10 @@
 - Cluster analysis across technical feature highlights Billboard ranking songs have Danceability, Energy, Loudness, Valence and Tempo
 - Clusters 7,8,2 and 3 (for Raw data) and clusters 2,3 (for PCA transformed data) Contain the majority of the Billboard ranked songs.
 
+## Instructions for reproducing the analysis
+To replicate this analysis:
+1.	Install required packages: tidyverse, MASS, rgl, patchwork, reshape2, fpc, clusterCrit, cluster, psych, RColorBrewer
+2.	Load acoustic_features_updated.csv
+3.	Run the script sequentially
+4.	All plots and metrics will be generated automatically
+
