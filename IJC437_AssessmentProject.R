@@ -95,11 +95,11 @@ for (i in 1:n_clusters) {
   km.out <- kmeans(scaled_df, centers = i, nstart = 20, iter.max=20)
   # Save the within cluster sum of squares
   wss[i] <- km.out$tot.withinss
-  sil <- silhouette(km.out$cluster, dist(scaled_df))
+  sil <- silhouette(km.out$cluster, dist(scaled_df)) #Calculating Silhouette widths for each k value
   if (!is.na(sil[1])) {
-    sil_widths[i] <- mean(sil[, 3])  # 3rd column = sil_width
+    sil_widths[i] <- mean(sil[, 3])  
   } else {
-    sil_widths[i] <- NA  # k=1 always gives NA silhouette
+    sil_widths[i] <- NA  #saving Silhouette widths
   }
 }
 
@@ -150,11 +150,11 @@ for (i in 1:n_clusters) {
   km.out.pca <- kmeans(scaledpca_df, centers = i, nstart = 20, iter.max=20)
   # Save the within cluster sum of squares
   wss_pca[i] <- km.out.pca$tot.withinss
-  sil_pca <- silhouette(km.out.pca$cluster, dist(scaledpca_df))
+  sil_pca <- silhouette(km.out.pca$cluster, dist(scaledpca_df)) #Calculating Silhouette widths for each k value
   if (!is.na(sil_pca[1])) {
-    sil_widthspca[i] <- mean(sil_pca[, 3])  # 3rd column = sil_width
+    sil_widthspca[i] <- mean(sil_pca[, 3]) # Saving Silhouette widths
   } else {
-    sil_widthspca[i] <- NA  # k=1 always gives NA silhouette
+    sil_widthspca[i] <- NA  
   }
 }
 
@@ -251,11 +251,11 @@ ggplot(df1, aes(x = pca1, y = pca2, fill = cluster_id_pca)) +
 
 
 #Plotting Cluster against Billboard ranked songs to see if pattern emerges:
-#Extracting Billboard ranked song from dataset:
-df_billboard<- df1 |>
+#Extracting Billboard ranked songs from dataset:
+df_billboard<- df1 %>%
   filter(rank_group != "Non-Billboard")
 
-#plotting based on Cluster Id generated with out PCA:
+#Plotting based on Cluster Id generated with out PCA:
 ggplot(df_billboard, aes(x = cluster_id, fill = rank_group)) +
   geom_bar() +
   scale_fill_brewer(palette = "Blues", direction = -1) +
@@ -266,7 +266,7 @@ ggplot(df_billboard, aes(x = cluster_id, fill = rank_group)) +
   ) +
   theme_minimal()
 
-#plotting based on Cluster Id generated with PCA:
+#Plotting based on Cluster Id generated with PCA:
 ggplot(df_billboard, aes(x = cluster_id_pca, fill = rank_group)) +
   geom_bar() +
   scale_fill_brewer(palette = "Blues", direction = 1) +
@@ -278,139 +278,173 @@ ggplot(df_billboard, aes(x = cluster_id_pca, fill = rank_group)) +
   theme_minimal()
 
 
-
-
-
-
-#working only on Billboard data:
-df_bb<-subset(df1, select= -c(pca1,pca2,cluster_id,cluster_id_pca))%>%
-  filter(rank_group != "Non-Billboard")
-View(df_bb)
-num_df2<-subset(df_bb, select =-c(song_id,max_rank,B_NB,duration_ms,rank_group,key,mode,time_signature))
-scaled_df2<-scale(num_df2)
-#PCA:
-pca2<-prcomp(scaled_df2)
-df_bb$pca1<-pca2$x[,1]
-View(df_bb)
-df_bb$pca2<-pca2$x[,2]
-ggplot(df_bb, aes(x = rank_group, y = pca1, fill = rank_group)) +
-  geom_boxplot() +
-  labs(
-    x = "Group",
-    y = "PC1 score",
-    fill = "Group"
-  ) +
-  theme_minimal()
-
-num_df3<- subset(df_bb, select=c(pca1,pca2))
-scaledpca_df2<-scale(num_df3)
-
-
-#Clustering without PCA:
-bb.km.out <- kmeans(scaled_df2, centers = 10, nstart = 20,iter.max=20)
-bb.km.out
-#Clustering with PCA :
-bb.km.out.pca <- kmeans(scaledpca_df2, centers = 10, nstart = 20,iter.max=20)
-bb.km.out.pca
-
-n_clusters <- 20
-
-# Initialize total within sum of squares error: wss
-bb.wss <- numeric(n_clusters)
-
-set.seed(123)
-
-# Look over 1 to n possible clusters
-for (i in 1:n_clusters) {
-  # Fit the model: km.out
-  bb.km.out <- kmeans(scaled_df2, centers = i, nstart = 20, iter.max=20)
-  # Save the within cluster sum of squares
-  bb.wss[i] <- bb.km.out$tot.withinss
-}
-
-# Look over 1 to n possible clusters
-bb.wss_pca <- numeric(n_clusters)
-for (i in 1:n_clusters) {
-  # Fit the model: km.out
-  bb.km.out.pca <- kmeans(scaledpca_df2, centers = i, nstart = 20, iter.max=20)
-  # Save the within cluster sum of squares
-  bb.wss_pca[i] <- bb.km.out.pca$tot.withinss
-}
-# Produce a scree plot
-bb.wss_df <- tibble(clusters = 1:n_clusters, wss = bb.wss)
-bb.wss_df_pca <- tibble(clusters = 1:n_clusters, wss = bb.wss_pca)
-#without PCA:
-scree_plot <- ggplot(bb.wss_df, aes(x = clusters, y = bb.wss, group = 1)) +
-  geom_point(size = 4)+
-  geom_line() +
+#Plotting Clusters againts technical features:
+#1.Danceability:
+p1 <- ggplot(df_billboard, aes(x = song_id, y = danceability, color = cluster_id)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#E69F00", "#56B4E9", "#009E73",
+                                "#F0E442", "#0072B2", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Danceability", title =" Raw Data",color = "Cluster ID") +
+  theme(legend.position = "bottom")
   
-  xlab('Number of clusters')
-
-scree_plot +geom_hline(
-  yintercept = bb.wss, 
-  linetype = 'dashed',  )
-
-#with PCA:
-scree_plot <- ggplot(bb.wss_df_pca, aes(x = clusters, y = bb.wss_pca, group = 1)) +
-  geom_point(size = 4)+
-  geom_line() +
+p2 <- ggplot(df_billboard, aes(x = song_id, y = danceability, color = cluster_id_pca)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#E69F00", "#56B4E9", "#009E73", 
+                                "#F0E442", "#0072B2", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Danceability", title =" PCA Data",color = "Cluster ID") +
+  theme(legend.position = "bottom")
   
-  xlab('Number of clusters')
 
-scree_plot +geom_hline(
-  yintercept = bb.wss_pca, 
-  linetype = 'dashed',  )
+#2.Energy
+p3 <- ggplot(df_billboard, aes(x = song_id, y = energy, color = cluster_id)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Energy", title =" Raw Data",color = "Cluster ID") +
+  theme(legend.position = "bottom")
 
-# deciding on Cluster size:
-
-set.seed(123)
-# Build model with k clusters: km.out
-bb.km.out <- kmeans(scaled_df2, centers = 6, nstart = 20, iter.max=20)
-bb.km.out.pca <- kmeans(scaledpca_df2, centers = 4, nstart = 20, iter.max=20)
-
-bb_ch1 <- calinhara(scaled_df2, bb.km.out$cluster)
-bb_ch1
-
-bb_ch2 <- calinhara(scaledpca_df2, bb.km.out.pca$cluster)
-bb_ch2
-
-df_bb$cluster_id <- factor(bb.km.out$cluster)
-ggplot(df_bb, aes(x=cluster_id)) +
-  geom_bar() +
-  xlab("cluster_id") 
-
-df_bb$cluster_id_pca <- factor(bb.km.out.pca$cluster)
-ggplot(df_bb, aes(x=cluster_id_pca)) +
-  geom_bar() +
-  xlab("cluster_id after PCA") 
+p4 <- ggplot(df_billboard, aes(x = song_id, y = energy, color = cluster_id_pca)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Energy", title =" PCA Data",color = "Cluster ID") +
+  theme(legend.position = "bottom")
 
 
-ggplot(df_bb, aes(x = cluster_id, fill = rank_group)) +
-  geom_bar() +
-  labs(
-    x = "Group",
-    fill = "Cluster ID"
-  ) +
-  theme_minimal()
+#3.Liveness
+p5 <- ggplot(df_billboard, aes(x = song_id, y = liveness, color = cluster_id)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Liveness",title =" Raw Data", color = "Cluster ID") +
+  theme(legend.position = "bottom")
 
-ggplot(df_bb, aes(x = cluster_id_pca, fill = rank_group)) +
-  geom_bar() +
-  labs(
-    x = "Group",
-    fill = "Cluster ID"
-  ) +
-  theme_minimal()
+p6 <- ggplot(df_billboard, aes(x = song_id, y = liveness, color = cluster_id_pca)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Liveness",title =" PCA Data", color = "Cluster ID") +
+  theme(legend.position = "bottom")
 
-ggplot(df_bb, aes(x = cluster_id_pca, y =max_rank )) +
-  geom_boxplot() +
-  labs(
-    x = "Group",
-    y = "PC1 score",
-    fill = "Group"
-  ) +
-  theme_minimal()
+p1/p2|p3/p4|p5/p6
+
+#4.Loudness
+p7 <- ggplot(df_billboard, aes(x = song_id, y = loudness, color = cluster_id)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Loudness", title =" Raw Data",color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+p8 <- ggplot(df_billboard, aes(x = song_id, y = loudness, color = cluster_id_pca)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Loudness",title =" PCA Data", color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+
+#5.Speechiness:
+p9 <- ggplot(df_billboard, aes(x = song_id, y = speechiness, color = cluster_id)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Speechiness",title =" Raw Data", color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+p10 <- ggplot(df_billboard, aes(x = song_id, y = speechiness, color = cluster_id_pca)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Speechiness",title =" PCA Data", color = "Cluster ID") +
+  theme(legend.position = "bottom")
 
 
 
+#6.Valence:
+p11 <- ggplot(df_billboard, aes(x = song_id, y = valence, color = cluster_id)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Valence", title =" Raw Data",color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+p12 <- ggplot(df_billboard, aes(x = song_id, y = valence, color = cluster_id_pca)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Valence", title =" PCA Data",color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+p7/p8|p9/p10|p11/p12
+
+#7.Tempo:
+p13 <- ggplot(df_billboard, aes(x = song_id, y = tempo, color = cluster_id)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Tempo", title =" Raw Data",color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+p14 <- ggplot(df_billboard, aes(x = song_id, y = tempo, color = cluster_id_pca)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Tempo", title =" PCA Data",color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+
+
+#8.Instrumentalness:
+p15 <- ggplot(df_billboard, aes(x = song_id, y = instrumentalness, color = cluster_id)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Instrumentalness",title =" Raw Data", color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+p16 <- ggplot(df_billboard, aes(x = song_id, y = instrumentalness, color = cluster_id_pca)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Instrumentalness",title =" PCA Data", color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+
+
+#9.Acousticness:
+p17 <- ggplot(df_billboard, aes(x = song_id, y = acousticness, color = cluster_id)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Acousticness",title =" Raw Data", color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+p18 <- ggplot(df_billboard, aes(x = song_id, y = acousticness, color = cluster_id_pca)) +
+  geom_point(size = 1, alpha = 0.7) +
+  scale_color_manual(values = c("#D55E00", "#F0E442", "#56B4E9", "#9ACD32", 
+                                "#A52A2A", "#556B2F", "#000000", "#CC79A7"))+
+  theme_minimal() +
+  labs(x = "Song ID", y = "Acousticness", title =" PCA Data",color = "Cluster ID") +
+  theme(legend.position = "bottom")
+
+p13/p14|p15/p16|p17/p18
 
 
