@@ -37,5 +37,5 @@
 ---
 
 ## 🐱 Fun Fact
-Currently side quest: Crocheting like my life depends on it.
+Current side quest: Crocheting like my life depends on it.
 
